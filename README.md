@@ -7,7 +7,7 @@ This repository contains the code for segmenting pulmonary fissures in CT images
 Install the required packages using Anaconda and the provided environment file:
 ```bash
 conda env create -f environment.yml
-conda activate fissure-segmentation
+conda activate fissure
 ```
 
 # Data
