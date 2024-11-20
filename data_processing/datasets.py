@@ -18,7 +18,7 @@ from pytorch3d.structures import Meshes, join_meshes_as_batch
 from torch.utils.data import Dataset
 
 from model_training.augmentations import image_augmentation, point_augmentation, transform_meshes
-from constants import POINT_DIR_COPD, IMG_DIR_COPD, ALIGN_CORNERS
+from constants import ALIGN_CORNERS, POINT_DIR_TS, IMG_DIR_TS_PREPROC
 from utils.general_utils import load_points, kpts_to_grid, kpts_to_world, load_meshes, o3d_to_pt3d_meshes
 from utils.sitk_image_ops import resample_equal_spacing, sitk_image_to_tensor, multiple_objects_morphology, \
     get_resample_factors, load_image_metadata
@@ -373,7 +373,7 @@ def normalize_img(img, min_val=IMG_MIN, max_val=IMG_MAX):
 
 class PointDataset(CustomDataset):
     def __init__(self, sample_points, kp_mode,
-                 folder=POINT_DIR, image_folder=IMG_DIR,
+                 folder=POINT_DIR_TS, image_folder=IMG_DIR_TS_PREPROC,
                  use_coords=True, patch_feat=None, exclude_rhf=False, lobes=False, binary=False, do_augmentation=True,
                  copd=False):
 
@@ -622,13 +622,12 @@ class SampleFromMeshDS(CustomDataset):
 
 
 class PointToMeshDS(PointDataset):
-    def __init__(self, sample_points, kp_mode, folder=POINT_DIR, image_folder=IMG_DIR, use_coords=True,
+    def __init__(self, sample_points, kp_mode, folder=POINT_DIR_TS, image_folder=IMG_DIR_TS_PREPROC, use_coords=True,
                  patch_feat=None, exclude_rhf=False, lobes=False, binary=False, do_augmentation=False, copd=False):
         super(PointToMeshDS, self).__init__(sample_points=sample_points, kp_mode=kp_mode, folder=folder,
                                             image_folder=image_folder,
                                             use_coords=use_coords, patch_feat=patch_feat, exclude_rhf=exclude_rhf,
-                                            lobes=lobes, binary=binary, do_augmentation=do_augmentation, copd=copd,
-                                            all_to_device=all_to_device)
+                                            lobes=lobes, binary=binary, do_augmentation=do_augmentation, copd=copd)
         self.meshes = []
         self.img_sizes = []
         for case, sequence in self.ids:
@@ -655,7 +654,7 @@ class PointToMeshDS(PointDataset):
 
 
 class PointToMeshAndLabelDataset(PointToMeshDS):
-    def __init__(self, sample_points, kp_mode, folder=POINT_DIR, image_folder=IMG_DIR, use_coords=True,
+    def __init__(self, sample_points, kp_mode, folder=POINT_DIR_TS, image_folder=IMG_DIR_TS_PREPROC, use_coords=True,
                  patch_feat=None, exclude_rhf=False, lobes=False, binary=False, do_augmentation=True, copd=False):
         super().__init__(sample_points=sample_points, kp_mode=kp_mode, folder=folder,
                          image_folder=image_folder,
