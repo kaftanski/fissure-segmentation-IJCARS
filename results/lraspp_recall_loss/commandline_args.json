@@ -1,0 +1,23 @@
+{
+  "gpu": 1,
+  "output": "results/lraspp_recall_loss",
+  "show": false,
+  "offline": false,
+  "epochs": 50,
+  "lr": 0.001,
+  "batch": 8,
+  "loss": "recall",
+  "loss_weights": null,
+  "wd": 1e-05,
+  "scheduler": "plateau",
+  "data": "fissures",
+  "ds": "ts",
+  "kp_mode": "foerstner",
+  "exclude_rhf": false,
+  "split": "data/totalsegmentator_splits_final.pkl",
+  "binary": false,
+  "test_only": false,
+  "fold": null,
+  "model": "v3",
+  "patch_size": 128
+}
