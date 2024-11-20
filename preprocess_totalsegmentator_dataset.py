@@ -13,8 +13,7 @@ from tqdm import tqdm
 
 from constants import IMG_DIR_TS_PREPROC, TS_RAW_DATA_PATH
 from data_processing.datasets import ImageDataset, IMG_MIN, IMG_MAX
-from data_processing.find_lobes import compute_surface_mesh_marching_cubes
-from data_processing.surface_fitting import poisson_reconstruction
+from data_processing.surface_fitting import poisson_reconstruction, compute_surface_mesh_marching_cubes
 from utils.general_utils import remove_all_but_biggest_component, new_dir, save_meshes
 from utils.tqdm_utils import tqdm_redirect
 

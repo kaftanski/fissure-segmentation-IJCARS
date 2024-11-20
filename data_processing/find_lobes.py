@@ -4,92 +4,10 @@ from typing import Tuple, List
 import SimpleITK as sitk
 import numpy as np
 import open3d as o3d
-import torch
-from skimage.measure import marching_cubes
-from torch.nn import functional as F
 
 from data_processing.datasets import LungData
-from data_processing.random_walk import compute_laplace_matrix, random_walk
-from utils.general_utils import create_o3d_mesh
+from data_processing.surface_fitting import compute_surface_mesh_marching_cubes
 from utils.visualization import visualize_o3d_mesh
-
-
-def fill_lobes(lobes: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    # compute graph laplacian
-    print('Computing graph Laplacian matrix')
-    L = compute_laplace_matrix(lobes != 0, 'binary')
-
-    # random walk lobe segmentation
-    print('Performing random walk')
-    probabilities = random_walk(L, labels=lobes, graph_mask=mask)
-
-    # final lobe segmentation
-    lobes_rw = torch.where(condition=mask.bool(), input=probabilities.argmax(-1) + 1, other=0)  # background is set to zero
-    # assert torch.all(seeds[seeds != 0] == lobes[seeds != 0]), 'Seed scribbles have changed label'
-
-    return lobes_rw
-
-
-def lobes_to_fissures(lobes: sitk.Image, mask: sitk.Image, device='cuda:2'):
-    print('Converting Lobes to Fissures ...')
-    # convert SimpleITK images to tensors
-    mask_tensor = torch.from_numpy(sitk.GetArrayFromImage(mask).astype(bool)).bool()
-    lobes_tensor = torch.from_numpy(sitk.GetArrayFromImage(lobes).astype(int)).long()
-
-    # fill lobes with random walk
-    lobes_filled = fill_lobes(lobes_tensor, mask_tensor)
-    # plt.imshow(lobes_filled[lobes_filled.shape[0]//2])
-    # plt.show()
-
-    lobes_filled_img = sitk.GetImageFromArray(lobes_filled.numpy())
-    lobes_filled_img.CopyInformation(lobes)
-
-    lobes_one_hot = F.one_hot(lobes_filled).permute(3, 0, 1, 2).unsqueeze(0)
-    print(lobes_one_hot.shape)
-
-    # Lobe labels / one-hot channels:
-    # right lower lobe: 1
-    # right upper lobe: 2
-    # left lower lobe: 3
-    # left upper lobe: 4
-    # right middle lobe: 5 (contained in label 2 if right horizontal fissure is not segmented)
-
-    n_lobes = lobes_one_hot.shape[1] - 1  # excluding background
-
-    # create overlapping structures in lobe-channels by channel-wise dilation
-    dilation_kernel = torch.tensor([[[0, 0, 0],
-                                     [0, 1, 0],
-                                     [0, 0, 0]],
-                                    [[0, 1, 0],
-                                     [1, 1, 1],
-                                     [0, 1, 0]],
-                                    [[0, 0, 0],
-                                     [0, 1, 0],
-                                     [0, 0, 0]]]).view(1, 1, 3, 3, 3).repeat(n_lobes+1, 1, 1, 1, 1)
-
-    dilated_lobes_one_hot = F.conv3d(F.pad(lobes_one_hot.half().to(device), pad=(1, 1, 1, 1, 1, 1)),
-                                     dilation_kernel.half().to(device), groups=n_lobes+1)
-
-    # assemble the fissure segmentation (fissures at the boundaries of specific lobes)
-    # left fissure (1): between lobes 3 & 4
-    lf = torch.logical_and(dilated_lobes_one_hot[0, 3], dilated_lobes_one_hot[0, 4])
-    fissure_tensor = torch.zeros_like(lf, dtype=torch.long)
-    fissure_tensor[lf] = 1
-
-    # right oblique fissure (2): between lobes 1 & 2 (and 1 & 5 if lobe 5 is present)
-    rof = torch.logical_and(dilated_lobes_one_hot[0, 1], dilated_lobes_one_hot[0, 2])
-    if n_lobes == 5:
-        rof += torch.logical_and(dilated_lobes_one_hot[0, 1], dilated_lobes_one_hot[0, 5])
-    fissure_tensor[rof] = 2
-
-    # right horizontal fissure (3): between lobes 2 & 5 (if lobe 5 is present)
-    if n_lobes == 5:
-        rhf = torch.logical_and(dilated_lobes_one_hot[0, 2], dilated_lobes_one_hot[0, 5])
-        fissure_tensor[rhf] = 3
-
-    fissure_img = sitk.GetImageFromArray(fissure_tensor.cpu().numpy().astype(np.uint8))
-    fissure_img.CopyInformation(lobes)
-    return fissure_img, lobes_filled_img
 
 
 def find_lobes(fissure_seg: sitk.Image, lung_mask: sitk.Image, exclude_rhf: bool = False) \
@@ -180,34 +98,6 @@ def find_lobes(fissure_seg: sitk.Image, lung_mask: sitk.Image, exclude_rhf: bool
     lobes_meshes = compute_surface_mesh_marching_cubes(lobes_components_relabel, lung_mask, num_lobes_target)
 
     return lobes_components_relabel, lobes_meshes, True
-
-
-def compute_surface_mesh_marching_cubes(label_img: sitk.Image, mask_image: sitk.Image = None,
-                                        max_label: int = None):
-    """
-
-    :param label_img: the label image to compute the surface of
-    :param mask_image: only voxels where mask==True are being considered.
-        Be sure to dilate the mask in order to not cut off som of the surface.
-    :param max_label: set it to ignore labels greater than this
-    :return: one mesh for each labelled object (excluding background)
-    """
-    meshes = []
-    if max_label is None:
-        max_label = np.unique(sitk.GetArrayViewFromImage(label_img))[-1]
-
-    for lb in range(1, max_label + 1):
-        print(f'\tComputing surface mesh no. {lb}')
-        verts, faces, normals, values = marching_cubes(
-            volume=(sitk.GetArrayViewFromImage(label_img) == lb),
-            level=0.5, spacing=label_img.GetSpacing()[::-1],
-            allow_degenerate=False, mask=sitk.GetArrayViewFromImage(mask_image) if mask_image is not None else None)
-
-        verts = np.flip(verts, axis=-1)  # bring coordinates into xyz format
-        mesh = create_o3d_mesh(verts=verts, tris=faces)
-        meshes.append(mesh)
-
-    return meshes
 
 
 if __name__ == '__main__':

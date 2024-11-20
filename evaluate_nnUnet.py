@@ -8,12 +8,10 @@ import SimpleITK as sitk
 import numpy as np
 import open3d as o3d
 import torch
-from tqdm import tqdm
 
 import constants
 from data_processing.datasets import LungData, load_split_file
-from data_processing.find_lobes import lobes_to_fissures
-from data_processing.surface_fitting import poisson_reconstruction, o3d_mesh_to_labelmap, pointcloud_surface_fitting
+from data_processing.surface_fitting import poisson_reconstruction, pointcloud_surface_fitting
 from train_point_segmentation import compute_mesh_metrics, write_results
 from utils.general_utils import find_test_fold_for_id, create_o3d_mesh, mask_out_verts_from_mesh, \
     remove_all_but_biggest_component
@@ -100,8 +98,6 @@ def evaluate_nnunet(result_dir, my_data_dir, mode='surface', pts_subsample=10000
             img_index = ds.get_index(case, sequence)
 
             labelmap_predict = sitk.ReadImage(f)
-            if 'Lobes' in result_dir:  # results are lobes -> convert them to fissures first
-                labelmap_predict, _ = lobes_to_fissures(labelmap_predict, mask=ds.get_lung_mask(img_index))
 
             if mode == 'surface_nodilate':
                 _, predicted_meshes, times = poisson_reconstruction(labelmap_predict, ds.get_lung_mask(img_index), return_times=True, mask_dilate_radius=0)

@@ -9,9 +9,10 @@ import torch
 from numpy.typing import ArrayLike
 from pytorch3d.ops import sample_points_from_meshes
 from pytorch3d.structures import Meshes
+from skimage.measure import marching_cubes
 
-from data_processing import datasets
-from utils.general_utils import mask_out_verts_from_mesh, mask_to_points, remove_all_but_biggest_component, save_meshes
+from utils.general_utils import mask_out_verts_from_mesh, mask_to_points, remove_all_but_biggest_component, save_meshes, \
+    create_o3d_mesh
 from utils.sitk_image_ops import sitk_image_to_tensor
 
 
@@ -168,33 +169,29 @@ def o3d_mesh_to_labelmap(o3d_meshes: List[o3d.geometry.TriangleMesh], shape, spa
     return label_tensor
 
 
-def regularize_fissure_segmentations(mode):
-    # load data
-    base_dir = '/home/kaftan/FissureSegmentation/data'
-    ds = data.LungData(base_dir)
-    for i in range(len(ds)):
-        file = ds.get_filename(i)
+def compute_surface_mesh_marching_cubes(label_img: sitk.Image, mask_image: sitk.Image = None,
+                                        max_label: int = None):
+    """
 
-        # if 'COPD' in file:
-        #     print('skipping COPD image')
-        #     continue
+    :param label_img: the label image to compute the surface of
+    :param mask_image: only voxels where mask==True are being considered.
+        Be sure to dilate the mask in order to not cut off som of the surface.
+    :param max_label: set it to ignore labels greater than this
+    :return: one mesh for each labelled object (excluding background)
+    """
+    meshes = []
+    if max_label is None:
+        max_label = np.unique(sitk.GetArrayViewFromImage(label_img))[-1]
 
-        print(f'Regularizing fissures for image: {file.split(os.sep)[-1]}')
-        if ds.fissures[i] is None:
-            print('\tno fissure segmentation found, skipping.\n')
-            continue
+    for lb in range(1, max_label + 1):
+        print(f'\tComputing surface mesh no. {lb}')
+        verts, faces, normals, values = marching_cubes(
+            volume=(sitk.GetArrayViewFromImage(label_img) == lb),
+            level=0.5, spacing=label_img.GetSpacing()[::-1],
+            allow_degenerate=False, mask=sitk.GetArrayViewFromImage(mask_image) if mask_image is not None else None)
 
-        img, fissures = ds[i]
+        verts = np.flip(verts, axis=-1)  # bring coordinates into xyz format
+        mesh = create_o3d_mesh(verts=verts, tris=faces)
+        meshes.append(mesh)
 
-        fissures_reg, meshes = poisson_reconstruction(fissures, ds.get_lung_mask(i))
-        case, sequence = ds.get_id(i)
-        save_meshes(meshes, base_dir, case, sequence)
-
-        output_file = file.replace('_img_', f'_fissures_{mode}_')
-        sitk.WriteImage(fissures_reg, output_file)
-
-
-if __name__ == '__main__':
-    regularize_fissure_segmentations()
-    # result = poisson_reconstruction(sitk.ReadImage('../data/EMPIRE16_fissures_fixed.nii.gz'))
-    # sitk.WriteImage(result, 'results/EMPIRE16_fissures_reg_fixed.nii.gz')
+    return meshes

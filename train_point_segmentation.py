@@ -13,7 +13,6 @@ from cli.cli_args import get_point_segmentation_parser
 from cli.cli_utils import load_args_for_testing, store_args, load_args
 from constants import POINT_DIR_COPD, POINT_DIR_TS, DEFAULT_SPLIT_TS, IMG_DIR_COPD, IMG_DIR_TS_PREPROC
 from data_processing.datasets import PointDataset, load_split_file, save_split_file, LungData
-from data_processing.find_lobes import lobes_to_fissures
 from data_processing.surface_fitting import pointcloud_surface_fitting, o3d_mesh_to_labelmap
 from evaluation.metrics import assd, label_mesh_assd, batch_dice
 from losses.access_losses import get_loss_fn
@@ -202,23 +201,7 @@ def test(ds: PointDataset, device, out_dir, show, args):
         mask_tensor = torch.from_numpy(sitk.GetArrayFromImage(mask_img).astype(bool))
 
         if ds.lobes:
-            # load the right target meshes (2 fissures in case of 4 lobes, 3 otherwise)
-            meshes_target = img_ds.get_fissure_meshes(img_index)[:2 if len(lbls.unique()[1:]) == 4 else 3]
-
-            # voxelize point labels (sparse)
-            lobes_tensor = torch.zeros_like(mask_tensor, dtype=torch.long)
-            pts_index = (pts / spacing).flip(-1).round().long().cpu()
-            lobes_tensor[pts_index[:, 0], pts_index[:, 1], pts_index[:, 2]] = labels_pred.squeeze().cpu()
-
-            # point labels are seeds for random walk, filling in the gaps
-            sparse_lobes_img = sitk.GetImageFromArray(lobes_tensor.numpy().astype(np.uint8))
-            sparse_lobes_img.CopyInformation(mask_img)
-            fissure_pred_img, lobes_pred_img = lobes_to_fissures(sparse_lobes_img, mask_img, device=device)
-
-            # write out intermediate results
-            sitk.WriteImage(sparse_lobes_img, os.path.join(label_dir, f'{case}_lobes_pointcloud_{sequence}.nii.gz'))
-            sitk.WriteImage(fissure_pred_img, os.path.join(label_dir, f'{case}_fissures_from_lobes_{sequence}.nii.gz'))
-            sitk.WriteImage(lobes_pred_img, os.path.join(label_dir, f'{case}_lobes_pred_{sequence}.nii.gz'))
+            raise NotImplementedError('Lobe-based evaluation is no longer supported.')
 
         else:
             meshes_target = img_ds.get_fissure_meshes(img_index)[:2 if ds.exclude_rhf else 3]
