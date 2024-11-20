@@ -22,6 +22,14 @@ path `TS_RAW_DATA_PATH` in `constants.py`. The script selects applicable images 
 segmentations from the lobe masks and crops the images to the thoracic region. Results will be written to 
 `IMG_DIR_TS_PREPROC`.
 
+Unfortunately, to load the data a different SimpleITK version (2.0.2) ist required (see issue https://github.com/wasserth/TotalSegmentator/issues/32).
+For this reason, we provide another conda environment to run the preprocessing script:
+```bash
+conda env create -f environment-ts-preproc.yml
+conda activate preproc-ts
+python preprocess_totalsegmentator_dataset.py
+```
+
 ## COPD validation data set
 The COPD data set can be accessed here: https://med.emory.edu/departments/radiation-oncology/research-laboratories/deformable-image-registration/downloads-and-reference-data/copdgene.html
 (citation: Castillo et al., Phys Med Biol 2013 https://doi.org/10.1088/0031-9155/58/9/2861)

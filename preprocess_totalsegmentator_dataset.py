@@ -163,6 +163,10 @@ def preprocess_ds():
         # reader.ReadImageInformation()
         # print(reader.GetMetaData('pixdim[1]'), reader.GetMetaData('pixdim[2]'), reader.GetMetaData('pixdim[3]'))
         # print(reader.GetMetaData('dim[1]'), reader.GetMetaData('dim[2]'), reader.GetMetaData('dim[3]'))
+
+        # load the image with SimpleITK version 2.0.2 or earlier
+        # (later versions are non-permissive with non-orthonormal directions and will throw an error.
+        # "ITK ERROR: ITK only supports orthonormal direction cosines. No orthonormal definition was found!")
         img = sitk.ReadImage(img_fn)
 
         # load the lobe labels
