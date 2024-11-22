@@ -13,7 +13,7 @@ from sklearn.metrics import RocCurveDisplay, average_precision_score
 from torch import nn
 from welford import Welford
 
-from constants import IMG_DIR_TS_PREPROC
+from constants import IMG_DIR_TS_PREPROC, IMG_DIR_COPD
 from data_processing.datasets import ImageDataset
 from evaluation.metrics import binary_recall, batch_dice
 from models.patch_based_model import PatchBasedModule
@@ -370,44 +370,12 @@ def load_fissure_stats(load_from: str = FISSURE_STATS_FILE):
 
 
 if __name__ == '__main__':
-    # test_img = sitk.ReadImage('../data/EMPIRE01_img_fixed.nii.gz')
-    # test_fissures = sitk.ReadImage('../data/EMPIRE01_fissures_poisson_fixed.nii.gz')
-    # test_mask = sitk.ReadImage('../data/EMPIRE01_mask_fixed.nii.gz')
-    #
-    # resample_spacing = None
-    # if resample_spacing is not None:
-    #     image = resample_equal_spacing(test_img, target_spacing=resample_spacing)
-    #     fissures = resample_equal_spacing(test_fissures, target_spacing=resample_spacing, use_nearest_neighbor=True)
-    #     lung_mask = resample_equal_spacing(test_mask, target_spacing=resample_spacing, use_nearest_neighbor=True)
-    #
-    # enhanced_img = get_enhanced_fissure_image(
-    #     test_img, test_fissures, test_mask, device='cuda:2', show=False)
-    # roc_auc, thresh, dsc, rec = fissure_candidates(enhanced_img, test_fissures, show=True)
-    # print(roc_auc)
-    # sitk.WriteImage(enhanced_img, 'results/EMPIRE01_fixed_fissures_enhanced_patch.nii.gz')
-    #
-    # enhanced_img = get_enhanced_fissure_image(
-    #     test_img, test_fissures, test_mask, device='cpu', show=False)
-    # roc_auc, thresh, dsc, rec = fissure_candidates(enhanced_img, test_fissures, show=True)
-    # print(roc_auc)
-    # sitk.WriteImage(enhanced_img, 'results/EMPIRE01_fixed_fissures_enhanced_torch.nii.gz')
+    # perform enhancement for TS dataset
+    total_seg_ds = TotalSegmentatorDataset()
+    enhance_full_dataset(total_seg_ds, IMG_DIR_TS_PREPROC, new_dir(IMG_DIR_TS_PREPROC, 'eval_enhancement'),
+                         resample_spacing=1, show=False, only_eval=False)
 
-    # compute_dataset_fissure_statistics(ImageDataset('../TotalSegmentator/ThoraxCrop'), save_to="./results/fissure_HU_mu_sigma_TS.csv")
-
-    # run_detached_from_pycharm()
-    # ds = TotalSegmentatorDataset()
-    # out_dir = new_dir('..', 'TotalSegmentator', 'ThoraxCrop_v2')
-    # eval_dir = new_dir(out_dir, 'eval_enhancement')
-    # enhance_full_dataset(ds, out_dir=out_dir, eval_dir=eval_dir, resample_spacing=1, show=False, device='cuda:2')
-
-    # # perform evaluation for COPD subset
-    # copd_ds = ImageDataset(IMG_DIR, copd=True, do_augmentation=False)
-    # out_dir = IMG_DIR
-    # eval_dir = new_dir(IMG_DIR, 'eval_enhancement_copd')
-    # enhance_full_dataset(copd_ds, out_dir, eval_dir, resample_spacing=1, show=False, only_eval=True)
-
-    # perform evaluation for TS dataset
-    copd_ds = TotalSegmentatorDataset()
-    out_dir = IMG_DIR_TS_PREPROC
-    eval_dir = new_dir(IMG_DIR_TS_PREPROC, 'eval_enhancement')
-    enhance_full_dataset(copd_ds, out_dir, eval_dir, resample_spacing=1, show=False, only_eval=True)
+    # perform enhancement for COPD dataset
+    copd_ds = ImageDataset(IMG_DIR_COPD, do_augmentation=False)
+    enhance_full_dataset(copd_ds, IMG_DIR_COPD, new_dir(IMG_DIR_COPD, 'eval_enhancement'),
+                         resample_spacing=1, show=False, only_eval=False)
