@@ -50,15 +50,14 @@ def get_noisy_keypoints(fissures_tensor, device):
     return kp
 
 
-def get_cnn_keypoints(cv_dir, case, sequence, device, out_path, softmax_threshold=0.3, feat_patch=5):
+def get_cnn_keypoints(src_data_dir, cv_dir, case, sequence, device, feat_patch=5):
     """ also computes CNN features (the softmax scores patch)
 
+    :param src_data_dir:
     :param cv_dir:
     :param case:
     :param sequence:
     :param device:
-    :param out_path:
-    :param softmax_threshold:
     :param feat_patch:
     :return:
     """
@@ -66,7 +65,7 @@ def get_cnn_keypoints(cv_dir, case, sequence, device, out_path, softmax_threshol
     args, _ = default_parser.parse_known_args()
     args = load_args_for_testing(cv_dir, args)
 
-    ds = ImageDataset(folder=data_dir, do_augmentation=False, patch_size=(args.patch_size,)*3,
+    ds = ImageDataset(folder=src_data_dir, do_augmentation=False, patch_size=(args.patch_size,)*3,
                       resample_spacing=args.spacing)
     cross_val_split = load_split_file(os.path.join(cv_dir, "cross_val_split.np.pkl"))
 
@@ -144,7 +143,7 @@ def limit_keypoints(kp, max_num_kpts=MAX_KPTS):
     return kp, perm
 
 
-def compute_keypoints(img, fissures, lobes, mask, out_dir, case, sequence, kp_mode='foerstner',
+def compute_keypoints(img, fissures, lobes, mask, out_dir, case, sequence, src_data_dir, kp_mode='foerstner',
                       enhanced_img_path: str=None, cnn_dir: str=None, device='cuda:0'):
     if kp_mode == 'cnn':
         assert cnn_dir is not None
@@ -178,7 +177,7 @@ def compute_keypoints(img, fissures, lobes, mask, out_dir, case, sequence, kp_mo
         kp = get_noisy_keypoints(fissures_tensor, device)
 
     elif kp_mode == 'cnn':
-        kp, cnn_feat = get_cnn_keypoints(cv_dir=cnn_dir, case=case, sequence=sequence, device=device, out_path=out_dir)
+        kp, cnn_feat = get_cnn_keypoints(src_data_dir=src_data_dir, cv_dir=cnn_dir, case=case, sequence=sequence, device=device)
         if isinstance(kp, (list, tuple)):
             # save an instance of points foreach fold
             for fold, (pts, feat) in enumerate(zip(kp, cnn_feat)):
@@ -205,7 +204,7 @@ def save_keypoints(case, device, fissures_tensor, img, img_tensor, kp, kp_mode, 
         perm = torch.randperm(len(kp), device=kp.device)[:MAX_KPTS]
         kp = kp[perm]
         if kp_mode == 'cnn':
-            torch.save(cnn_feat.cpu()[:, perm], os.path.join(out_dir, f'{case}_cnn_{sequence}.pth'))
+            torch.save(cnn_feat.cpu()[:, perm.cpu()], os.path.join(out_dir, f'{case}_cnn_{sequence}.pth'))
     elif len(kp) < 2048:
         print(case, sequence, "has less than minimum of 2048 kpts!")
 
@@ -248,7 +247,7 @@ def run_all_kp_modes(img_data_dir, output_point_data_dir):
 
     for mode in KP_MODES:
         print('MODE:', mode)
-        for i in range(len(ds)):
+        for i in range(4):#len(ds)):
             case, _, sequence = ds.get_filename(i).split('/')[-1].split('_')
             sequence = sequence.replace('.nii.gz', '')
 
@@ -267,8 +266,9 @@ def run_all_kp_modes(img_data_dir, output_point_data_dir):
             else:
                 device = 'cuda:0'
 
-            compute_keypoints(img, fissures, lobes, mask, output_point_data_dir, case, sequence, kp_mode=mode,
-                              enhanced_img_path=ds.fissures_enhanced[i], device=device, cnn_dir=cnn_dir)
+            compute_keypoints(img, fissures, lobes, mask, output_point_data_dir, case, sequence,
+                              src_data_dir=img_data_dir, kp_mode=mode, enhanced_img_path=ds.fissures_enhanced[i],
+                              device=device, cnn_dir=cnn_dir)
 
 
 if __name__ == '__main__':
