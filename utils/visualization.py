@@ -165,7 +165,7 @@ def point_cloud_on_axis(ax, points, c, cmap=None, marker='.', title='', label=''
     if isinstance(points, torch.Tensor):
         points = points.cpu()
 
-    points = points.squeeze()
+    points = points.squeeze(0)
 
     ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=c, cmap=cmap, marker=marker, label=label, alpha=alpha)
     ax.set_xlabel('X')
