@@ -488,6 +488,9 @@ def cross_val(model, ds, split_file, device, test_fn, args):
             except FileNotFoundError:
                 train_times_min.append(0.0)
 
+    if args.train_only:
+        return
+
     test_dice = torch.stack(test_dice, dim=0)
     test_assd = torch.stack(test_assd, dim=0)
     test_sdsd = torch.stack(test_sdsd, dim=0)
