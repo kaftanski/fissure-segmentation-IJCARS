@@ -16,4 +16,4 @@ class NNULoss(nn.Module):
     def forward(self, prediction, target):
         ce = self.ce_loss(prediction, target)
         dice = self.dice_loss(prediction, target)
-        return ce + dice, {'CE': ce, 'GDL': dice}
+        return self.w_ce * ce + self.w_dice * dice, {'CE': ce, 'GDL': dice}

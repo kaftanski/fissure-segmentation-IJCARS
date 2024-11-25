@@ -40,7 +40,12 @@ def get_loss_fn(loss: Losses, class_weights: torch.Tensor = None, term_weights: 
         loss = loss.value
 
     if loss == Losses.NNUNET.value:
-        return NNULoss(class_weights)
+        if term_weights is not None:
+            assert len(term_weights) == 2
+            return NNULoss(class_weights, term_weights[0], term_weights[1])
+        else:
+            # default weights
+            return NNULoss(class_weights)
 
     if loss == Losses.CE.value:
         return nn.CrossEntropyLoss(class_weights)
