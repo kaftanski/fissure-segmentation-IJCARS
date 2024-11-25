@@ -9,13 +9,12 @@ def get_generic_parser(description):
 
     parser.add_argument('--gpu', default=0, help='gpu index to train on', type=int)
     parser.add_argument('--output', default='./results', help='output data path', type=str)
-    parser.add_argument('--show', const=True, default=False,
-                        help='show pyplot plots (default: plots will only be saved to disk)', nargs='?')
-    parser.add_argument('--offline', const=True, default=False,
+    parser.add_argument('--show', action='store_true',
+                        help='show pyplot plots (default: plots will only be saved to disk)')
+    parser.add_argument('--offline', action='store_true',
                         help='Runs the script with nohup and detaches the script. Disables the --show option. '
-                             'Output logs will be saved to "./results/logs/<script_name>_<timestamp>.txt"',
-                        nargs='?')
-    parser.add_argument('--speed', const=True, default=False, nargs='?',
+                             'Output logs will be saved to "./results/logs/<script_name>_<timestamp>.txt"')
+    parser.add_argument('--speed', action='store_true',
                         help='Run inference speed test (and nothing else)')
 
     add_training_parameters(parser)
@@ -44,12 +43,12 @@ def add_training_parameters(parser):
 def add_test_parameters(parser):
     group = parser.add_argument_group('Testing Parameters')
 
-    group.add_argument('--test_only', const=True, default=False, help='do not train model', nargs='?')
-    group.add_argument('--train_only', const=True, default=False, help='do not test model', nargs='?')
+    group.add_argument('--test_only', action='store_true', help='do not train model')
+    group.add_argument('--train_only', action='store_true', help='do not test model')
     group.add_argument('--fold', default=None, type=int,
                        help='specify if only one fold should be evaluated '
                             '(needs to be in range of folds in the split file)')
-    group.add_argument('--copd', const=True, default=False, nargs='?',
+    group.add_argument('--copd', action='store_true',
                        help='validate model on COPD data set (disables cross-validation and overrides speed-test option)')
 
 
@@ -59,11 +58,11 @@ def add_data_parameters(parser):
     group.add_argument('--data', help='type of data, either fissures or lobes',
                        default='fissures', type=str, choices=['fissures', 'lobes'])
     group.add_argument('--kp_mode', default='foerstner', help='keypoint extraction mode', type=str, choices=KP_MODES)
-    group.add_argument('--exclude_rhf', const=True, default=False,
-                       help='exclude the right horizontal fissure from the model', nargs='?')
+    group.add_argument('--exclude_rhf', action='store_true',
+                       help='exclude the right horizontal fissure from the model')
     group.add_argument('--split', default=None, type=str,
                        help='cross validation split file. If None: will take the dataset defaults.')
-    group.add_argument('--binary', const=True, default=False, nargs='?',
+    group.add_argument('--binary', action='store_true',
                        help='make classification problem binary (only train with fissure/non-fissure labels)')
 
 
@@ -75,9 +74,9 @@ def get_dgcnn_train_parser():
     group.add_argument('--pts', default=2048, help='number of points per forward pass', type=int)
     group.add_argument('--patch', default=None, type=str, choices=FEATURE_MODES,
                        help=f'use image patch around points as features in addition to the point coordinates')
-    group.add_argument('--transformer', const=True, default=False,
-                       help='use spatial transformer module in DGCNN', nargs='?')
-    group.add_argument('--dynamic', const=True, default=False, nargs='?',
+    group.add_argument('--transformer', action='store_true',
+                       help='use spatial transformer module in DGCNN')
+    group.add_argument('--dynamic', action='store_true',
                        help='use dynamic graph computation in DGCNN (by default, kNN graph computed once from coords')
 
     parser.set_defaults(scheduler='cosine')
@@ -89,7 +88,7 @@ def get_point_segmentation_parser():
     parser = get_dgcnn_train_parser()
     group = parser.add_argument_group('Model Choice')
     group.add_argument('--model', choices=['PointNet', 'DGCNN', 'PointTransformer'], default='DGCNN',
-                       help='Choose the segmentation model class.')
+                       help='Choose the segmentation model class (default is DGCNN)')
     return parser
 
 
@@ -128,8 +127,8 @@ def get_pc_ae_train_parser():
 
     group = parser.add_argument_group('PC-AE parameters')
     group.add_argument("--latent", help="Dimensionality of latent shape code (z).", default=512, type=int)
-    group.add_argument("--mesh", default=False, const=True,
-                       help="Make the decoder fold a mesh instead of a point cloud.", nargs='?')
+    group.add_argument("--mesh", action='store_true',
+                       help="Make the decoder fold a mesh instead of a point cloud.")
     group.add_argument("--pc_or_mesh", choices=['pc', 'mesh'], default='mesh',
                        help="Data type of the initial shape for the decoder, either point cloud or mesh plane.")
     group.add_argument("--decoder_type", default='deforming', choices=['deforming', 'folding'],
