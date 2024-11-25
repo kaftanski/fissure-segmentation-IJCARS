@@ -2,6 +2,10 @@ import csv
 
 import torch
 from torch import nn
+from thop import profile, clever_format
+from torchinfo import summary
+from ptflops import get_model_complexity_info
+import os
 
 
 def count_parameters(model):
@@ -23,7 +27,7 @@ def param_and_op_count(model, input_shape, out_dir=None, fname='op_count.csv'):
     macs_ptflops, params_ptflops = get_model_complexity_info(model, input_shape[1:], as_strings=False,
                                                              print_per_layer_stat=False, verbose=True)
     if out_dir is not None:
-        with open(os.path.join(out_dir, 'op_count.csv'), 'w') as csv_file:
+        with open(os.path.join(out_dir, fname), 'w') as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(['Counting method', 'Parameters', 'MACs'])
             writer.writerow(['thop', params_thop, macs_thop])

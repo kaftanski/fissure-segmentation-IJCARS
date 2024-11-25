@@ -157,14 +157,8 @@ class ModelTrainer:
             # forward pass
             output = self.model(x)
 
-            # UGLY SPECIAL CASE
-            if isinstance(self.loss_function, DGSSMLoss):
-                # use optimal SSM weights for supervision
-                shape = y[0].to(self.device)
-                with torch.no_grad():
-                    target_weights = self.model.ssm(shape)
-                y = (shape, target_weights, y[1].to(self.device))  # shape, target weights and target affine params
-            elif isinstance(self.loss_function, DPSRLoss):
+            # special handling for DPSRLoss
+            if isinstance(self.loss_function, DPSRLoss):
                 target_labels, target_meshes = y
                 y = (target_labels.to(self.device), target_meshes.to(self.device))
             else:
