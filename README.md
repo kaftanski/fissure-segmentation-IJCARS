@@ -47,6 +47,7 @@ Keypoints and features are pre-computed from the image data. Run the following s
 1. `python -m data_processing.fissure_enhancement`
 2. `python -m data_processing.keypint_extraction`
 3. `python -m data_processing.point_features`
+
 Results will be written into `data/points` by default.
 
 # Train models
@@ -54,6 +55,7 @@ The different models can be trained using the following scripts:
 - Point Cloud segmentation networks (DGCNN, PointNet, PointTransformer): `train_point_segmentation.py`
 - Point Cloud Autoencoder (PC-AE): `train_pc_ae.py`
 - Keypoint CNN (MobileNetV3 + LR-ASPP): `train_keypoint_cnn.py` (pre-trained weights are available in `results/lraspp_recall_loss`)
+
 Run the scripts with the `-h` flag to see available options.
 
 # Evaluate models
