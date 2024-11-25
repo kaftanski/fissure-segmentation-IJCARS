@@ -165,7 +165,8 @@ if __name__ == '__main__':
     # create output directory
     new_dir(args.output)
 
-    param_and_op_count(model, (ds.num_objects, *ds[0][0].shape), out_dir=args.output)
+    param_and_op_count(model, (ds.num_objects, *ds[0][0].shape), out_dir=args.output,
+                       use_torchinfo=False, use_ptflops=False)  # for some reason only thop works with this model
 
     # store config
     if not args.test_only:
