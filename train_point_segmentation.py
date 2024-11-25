@@ -584,12 +584,22 @@ if __name__ == '__main__':
         print('Validating with COPD dataset')
         args.test_only = True
         args.speed = False
+
+        if args.kp_mode == 'cnn':
+            # only hard-coded fold0 to support the counting of in-features below (otherwise data set would be empty)
+            # needed, because for COPD data, we have 5 folds of trained keypoint CNNs
+            point_dir = os.path.join(point_dir, 'cnn', 'fold0')
+
     else:
         print(f'Using point data from {point_dir}')
     ds = PointDataset(args.pts, kp_mode=args.kp_mode, use_coords=True,
                       folder=point_dir, image_folder=img_dir,
                       patch_feat=args.patch,
                       exclude_rhf=args.exclude_rhf, lobes=args.data == 'lobes', binary=args.binary, copd=args.copd)
+
+    if args.copd:
+        # remove the fold0 from the folder path so that the split_data_set function does not get confused
+        ds.folder = point_dir.replace('fold0', '')
 
     # setup folder
     if not os.path.isdir(args.output):
