@@ -127,10 +127,8 @@ def get_pc_ae_train_parser():
 
     group = parser.add_argument_group('PC-AE parameters')
     group.add_argument("--latent", help="Dimensionality of latent shape code (z).", default=512, type=int)
-    group.add_argument("--mesh", action='store_true',
-                       help="Make the decoder fold a mesh instead of a point cloud.")
-    group.add_argument("--pc_or_mesh", choices=['pc', 'mesh'], default='mesh',
-                       help="Data type of the initial shape for the decoder, either point cloud or mesh plane.")
+    group.add_argument("--pc_output", action='store_true',
+                       help="Make the decoder fold a point cloud instead of a mesh.")
     group.add_argument("--decoder_type", default='deforming', choices=['deforming', 'folding'],
                        help="Type of the decoder can be 'deforming' decoder (residual displacements of the initial "
                             "shape) or 'folding' (original FoldingNet implementation).")

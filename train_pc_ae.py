@@ -153,13 +153,13 @@ if __name__ == '__main__':
     # configure dataset
     mesh_dir = IMG_DIR_TS_PREPROC
 
-    ds = SampleFromMeshDS(mesh_dir, args.pts, fixed_object=args.obj, lobes=args.data == 'lobes', mesh_as_target=args.mesh)
+    ds = SampleFromMeshDS(mesh_dir, args.pts, fixed_object=args.obj, lobes=args.data == 'lobes', mesh_as_target=not args.pc_output)
 
     # configure model
-    if not args.mesh and not args.loss == 'mesh':
+    if args.pc_output and args.loss == 'mesh':
         raise ValueError('Cannot compute mesh loss for non-mesh reconstructions of the AE.')
 
-    model = DGCNNFoldingNet(k=args.k, n_embedding=args.latent, n_input_points=args.pts, decode_mesh=args.mesh,
+    model = DGCNNFoldingNet(k=args.k, n_embedding=args.latent, n_input_points=args.pts, decode_mesh=not args.pc_output,
                             deform=args.decoder_type == 'deforming', static=not args.dynamic, dec_depth=args.dec_depth)
 
     # create output directory
