@@ -143,9 +143,9 @@ def visualize_point_cloud(points, labels=None, title='', exclude_background=True
         labels = labels[labels != 0]
 
     # colors = ['r', 'g', 'b', 'y']
-    cmap = ListedColormap(colors[:labels.max() + (0 if exclude_background else 1)])
+    cmap = ListedColormap(colors, N=labels.max())
 
-    point_cloud_on_axis(ax, points, labels.cpu(), cmap, title=title, alpha=alpha)
+    point_cloud_on_axis(ax, points, labels.cpu() - 1, cmap, title=title, alpha=alpha)
     # ax.view_init(elev=100., azim=-60.)
 
     if not show_ax:
