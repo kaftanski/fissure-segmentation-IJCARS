@@ -45,7 +45,7 @@ Then, preprocessing can be applied by running `preprocess_copd_dataset.py`.
 ## Pre-computing keypoints and features
 Keypoints and features are pre-computed from the image data. Run the following scripts:
 1. `python -m data_processing.fissure_enhancement`
-2. `python -m data_processing.keypint_extraction`
+2. `python -m data_processing.keypoint_extraction`
 3. `python -m data_processing.point_features`
 
 Results will be written into `data/points` by default.
