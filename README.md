@@ -72,15 +72,14 @@ If you used code in this repository or found it useful in any way for your resea
 
 1. Journal paper for Point Cloud Autoencoder (PC-AE) and comparison of geometric segmentation networks (under review):
 ```
-@article{Kaftan2024_FissureSegmentation_IJCARS,
+@article{Kaftan2025_FissureSegmentation_IJCARS,
   title={Sparse Keypoint Segmentation of Lung Fissures: Efficient Geometric Deep Learning for Abstracting Volumetric Images},
   author={Kaftan, Paul and Heinrich, Mattias P and Hansen, Lasse and Rasche, Volker and Kestler, Hans A and Bigalke, Alexander},
   journal={International Journal of Computer Assisted Radiology and Surgery},
-  year={tbd},
-  volume={tbd},
-  number={tbd},
-  pages={tbd},
-  doi={tbd}
+  year={2025},
+  month = jan,
+  issn = {1861-6429},
+  doi={10.1007/s11548-024-03310-z}
 }
 ```
 
