@@ -375,7 +375,7 @@ class PointDataset(CustomDataset):
     def __init__(self, sample_points, kp_mode,
                  folder=POINT_DIR_TS, image_folder=IMG_DIR_TS_PREPROC,
                  use_coords=True, patch_feat=None, exclude_rhf=False, lobes=False, binary=False, do_augmentation=True,
-                 copd=False):
+                 copd=False, only_val_data=False):
 
         super(PointDataset, self).__init__(exclude_rhf=exclude_rhf, do_augmentation=do_augmentation, binary=binary, copd=copd)
 
@@ -401,6 +401,7 @@ class PointDataset(CustomDataset):
         self.points = []
         self.features = []
         self.labels = []
+        self.only_val_data = only_val_data
         for file in files:
             case, _, sequence = file.split('/')[-1].split('_')
             if self.copd:
@@ -489,7 +490,7 @@ class PointDataset(CustomDataset):
         return self.points[i]
 
     def split_data_set(self, split: OrderedDict[str, np.ndarray], fold_nr=None):
-        if self.copd:
+        if self.copd or self.only_val_data:
             # this is a pure validation data set so no splitting required, no training-ds either!
             if self.kp_mode == 'cnn':
                 assert fold_nr is not None, 'Please specify the number of the fold to use'

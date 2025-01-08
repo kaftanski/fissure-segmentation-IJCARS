@@ -203,7 +203,7 @@ def save_keypoints(case, device, fissures_tensor, img, img_tensor, kp, kp_mode, 
     if len(kp) > MAX_KPTS:
         perm = torch.randperm(len(kp), device=kp.device)[:MAX_KPTS]
         kp = kp[perm]
-        if kp_mode == 'cnn':
+        if kp_mode == 'cnn' and cnn_feat is not None:
             torch.save(cnn_feat.cpu()[:, perm.cpu()], os.path.join(out_dir, f'{case}_cnn_{sequence}.pth'))
     elif len(kp) < 2048:
         print(case, sequence, "has less than minimum of 2048 kpts!")

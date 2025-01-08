@@ -84,6 +84,7 @@ class LoadableModel(nn.Module):
         Load a python model configuration and weights.
         """
         checkpoint = torch.load(path, map_location=torch.device(device))
+        del checkpoint['config']['image_feat_module']  # remove unused key (prevents compatibility issues with older models)
         model = cls(**checkpoint['config'])
         model.load_state_dict(checkpoint['model_state'], strict=False)
         return model
