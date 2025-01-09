@@ -1,5 +1,6 @@
 from typing import Sequence, Union
 
+import os
 import math
 import numpy as np
 import open3d
@@ -325,3 +326,25 @@ def color_2d_mesh_bremm(vertices: torch.Tensor, triangles: torch.Tensor):
     tri_coords = torch.gather(vertices.unsqueeze(2).repeat(1, 1, 3), dim=0, index=triangles.unsqueeze(1).repeat(1, 2, 1))
     vertex_centroids = tri_coords.mean(2)  # arithmetic mean of the three vertices of a triangle are its centroid
     return color_2d_points_bremm(vertex_centroids)
+
+
+def save_fig(fig, outdir, basename_without_extension, dpi=300, show=True, pdf=True, padding=False, bbox_inches='tight'):
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir, exist_ok=True)
+    extension = '.png' if not pdf else '.pdf'
+    path = os.path.join(outdir, basename_without_extension + extension)
+
+    if padding:
+        pad_inches = 0.1
+    else:
+        if not pdf:
+            # need a little padding for pngs
+            pad_inches = 0.02
+        else:
+            pad_inches = 0
+
+    fig.savefig(path, bbox_inches=bbox_inches, dpi=dpi, pad_inches=pad_inches)
+    if show:
+        plt.show()
+    else:
+        plt.close(fig)
