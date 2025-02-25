@@ -1,6 +1,10 @@
 # Sparse Keypoint Segmentation of Lung Fissures: Efficient Geometric Deep Learning for Abstracting Volumetric Images
 This repository contains the code for segmenting pulmonary fissures in CT images using keypoint extraction and geometric deep learning.
 
+Paper: https://doi.org/10.1007/s11548-024-03310-z
+
+Supplementary material: https://sysbio.uni-ulm.de/downloads/Supplement_Kaftan2025/online_resources_revision.pdf
+
 ![Overview of the pipeline](overview.png)
 
 # Environment
